@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinetic Subtitle Studio — Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Inter:wght@400;500;600;700&family=Montserrat:wght@800&family=Poppins:wght@700;800&family=Rubik:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c10;
+    --panel: #14161d;
+    --panel-2: #1b1e27;
+    --line: #272b37;
+    --text: #e9ebf2;
+    --muted: #8b90a3;
+    --accent: #7c5cff;
+    --accent-2: #00d4ff;
+    --live: #ff3b5c;
+    --ok: #2ee59d;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, "Segoe UI", sans-serif; font-size: 14px; }
+  body { min-height: 100vh; background:
+    radial-gradient(900px 500px at 85% -10%, rgba(124,92,255,.16), transparent 60%),
+    radial-gradient(700px 400px at -10% 110%, rgba(0,212,255,.08), transparent 60%), var(--bg); }
+
+  header { display: flex; align-items: center; gap: 14px; padding: 14px 24px; border-bottom: 1px solid var(--line); background: rgba(11,12,16,.8); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 5; }
+  .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-weight: 800; color: #fff; letter-spacing: -1px; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+  header small { color: var(--muted); display: block; font-size: 12px; font-weight: 400; }
+  .spacer { flex: 1; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #555a6b; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.bad { background: var(--live); }
+
+  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, 1fr); gap: 20px; padding: 20px 24px 40px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .card h2 { margin: 0 0 14px; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+  /* Mic */
+  .mic-row { display: flex; align-items: center; gap: 16px; }
+  #micBtn { width: 76px; height: 76px; border-radius: 50%; border: 0; cursor: pointer; flex: none; color: #fff; font-size: 30px; background: linear-gradient(135deg, var(--accent), #5a3df0); box-shadow: 0 8px 24px rgba(124,92,255,.4); transition: transform .15s, box-shadow .15s; position: relative; }
+  #micBtn:hover { transform: scale(1.05); }
+  #micBtn:active { transform: scale(.96); }
+  #micBtn.live { background: linear-gradient(135deg, var(--live), #d11f40); box-shadow: 0 8px 24px rgba(255,59,92,.45); }
+  #micBtn.live::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--live); animation: ring 1.4s ease-out infinite; }
+  @keyframes ring { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.35); opacity: 0; } }
+  .mic-info b { font-size: 17px; display: block; }
+  .mic-info span { color: var(--muted); font-size: 12.5px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+  #transcript { margin-top: 16px; min-height: 64px; max-height: 120px; overflow: auto; padding: 12px 14px; border-radius: 12px; background: var(--bg); border: 1px dashed var(--line); color: var(--muted); line-height: 1.5; }
+  #transcript.has { color: var(--text); border-style: solid; }
+  #transcript i { color: var(--accent-2); font-style: normal; }
+  #notice { margin-top: 10px; font-size: 12.5px; color: #ffb454; display: none; }
+  #notice.show { display: block; }
+
+  /* Fields */
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .lbl { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 600; color: #c6c9d6; }
+  .field > label output { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; padding: 8px 6px; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: 12.5px; border-radius: 7px; cursor: pointer; transition: all .15s; }
+  .seg button:hover { color: var(--text); }
+  .seg button.on { background: var(--accent); color: #fff; box-shadow: 0 2px 10px rgba(124,92,255,.4); }
+
+  .anims { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .anim { padding: 12px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; text-align: center; line-height: 1.25; transition: all .15s; }
+  .anim:hover { border-color: #3a3f51; color: var(--text); }
+  .anim.on { border-color: var(--accent); background: rgba(124,92,255,.15); color: #fff; }
+  .anim em { display: block; font-style: normal; font-size: 20px; margin-bottom: 4px; }
+  @media (max-width: 560px) { .anims { grid-template-columns: repeat(3, 1fr); } }
+
+  select, input[type=text] { width: 100%; padding: 10px 12px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: 14px; }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--line); border-radius: 99px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid var(--accent); cursor: pointer; }
+  input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 4px solid var(--accent); cursor: pointer; }
+
+  .color { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+  .color input { -webkit-appearance: none; appearance: none; width: 30px; height: 30px; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 8px; }
+  .color input::-webkit-color-swatch-wrapper { padding: 0; }
+  .color input::-webkit-color-swatch { border: 2px solid var(--line); border-radius: 8px; }
+  .color code { color: var(--muted); font-size: 12px; }
+
+  .toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12.5px; color: #c6c9d6; user-select: none; }
+  .switch { width: 38px; height: 22px; border-radius: 99px; background: var(--line); position: relative; transition: .2s; flex: none; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .2s; }
+  .toggle.on .switch { background: var(--accent); }
+  .toggle.on .switch::after { transform: translateX(16px); }
+
+  /* Preview */
+  .preview-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; border: 1px solid var(--line);
+    background: conic-gradient(#2a2d38 25%, #20232c 0 50%, #2a2d38 0 75%, #20232c 0) 0 0 / 24px 24px; }
+  .preview-wrap iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; background: transparent; color-scheme: normal; transform-origin: 0 0; pointer-events: none; }
+  .hint { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  button.btn { padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; transition: all .15s; }
+  button.btn:hover { border-color: var(--accent); }
+  button.btn.primary { background: linear-gradient(135deg, var(--accent), #5a3df0); border-color: transparent; color: #fff; flex: 1; }
+  button.btn.ok { background: var(--ok); color: #05281b; border-color: transparent; }
+  .url { margin-top: 12px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--accent-2); overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">K</div>
+  <div>
+    <h1>Kinetic Subtitle Studio</h1>
+    <small>Panel kontrol &middot; subtitle real-time</small>
+  </div>
+  <div class="spacer"></div>
+  <span class="chip" title="Koneksi ke server"><span class="dot" id="dotSocket"></span><span id="txtSocket">Menghubungkan…</span></span>
+  <span class="chip" title="Jumlah Browser Source overlay yang terbuka"><span class="dot" id="dotOverlay"></span><span id="txtOverlay">Overlay: 0</span></span>
+</header>
+
+<main>
+  <!-- ================= KIRI: KONTROL ================= -->
+  <div class="col">
+
+    <section class="card">
+      <h2>Mikrofon</h2>
+      <div class="mic-row">
+        <button id="micBtn" aria-label="Mulai / hentikan mikrofon" title="Mulai / hentikan (Spasi)">🎙️</button>
+        <div class="mic-info">
+          <b id="micTitle">Mikrofon mati</b>
+          <span id="micSub">Klik tombol untuk mulai mendengarkan (bahasa: Indonesia).</span>
+          <div class="badges">
+            <span class="chip"><span class="dot" id="dotMic"></span><span id="txtMic">Idle</span></span>
+            <span class="chip"><span class="dot" id="dotWake"></span><span id="txtWake">Wake Lock: off</span></span>
+          </div>
+        </div>
+      </div>
+      <div id="transcript">Teks yang kamu ucapkan akan muncul di sini…</div>
+      <div id="notice"></div>
+    </section>
+
+    <section class="card">
+      <h2>Alur Kata</h2>
+      <div class="field">
+        <div class="seg" id="segMode">
+          <button data-v="w1">1 Kata</button>
+          <button data-v="w2">2 Kata</button>
+          <button data-v="w34">3-4 Kata</button>
+          <button data-v="para">Paragraf</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">Animasi Kinetik</div>
+        <div class="anims" id="animGrid">
+          <button class="anim" data-v="pop"><em>💥</em>Pop &amp; Bounce</button>
+          <button class="anim" data-v="slide"><em>⬆️</em>Slide Up</button>
+          <button class="anim" data-v="zoom"><em>🔍</em>Zoom Punch</button>
+          <button class="anim" data-v="jelly"><em>🍮</em>Elastic Jelly</button>
+          <button class="anim" data-v="sticker"><em>🏷️</em>Sticker Box</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Kustomisasi Teks</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="font">Font</label>
+          <select id="font">
+            <option>Montserrat</option><option>Poppins</option><option>Anton</option><option>Bangers</option><option>Rubik</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="size">Ukuran Font <output id="sizeOut"></output></label>
+          <input type="range" id="size" min="24" max="260" step="2">
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div class="field"><div class="lbl">Warna Teks</div>
+          <label class="color"><input type="color" id="color"><code id="colorCode"></code></label></div>
+        <div class="field"><div class="lbl">Highlight Aktif</div>
+          <label class="color"><input type="color" id="highlight"><code id="highlightCode"></code></label></div>
+        <div class="field"><div class="lbl">Warna Outline</div>
+          <label class="color"><input type="color" id="outlineColor"><code id="outlineColorCode"></code></label></div>
+      </div>
+
+      <div class="field">
+        <div class="lbl">Gaya Highlight Kata Aktif</div>
+        <div class="seg" id="segHl">
+          <button data-v="color">Warna Teks</button>
+          <button data-v="marker">Stabilo (Latar)</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="outline">Ketebalan Outline <output id="outlineOut"></output></label>
+          <input type="range" id="outline" min="0" max="20" step="1">
+        </div>
+        <div class="field">
+          <div class="lbl">Huruf Kapital</div>
+          <div class="toggle" id="capsToggle"><span>CAPS</span><span class="switch"></span></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field"><div class="lbl">Posisi Horizontal</div>
+          <div class="seg" id="segH"><button data-v="left">Kiri</button><button data-v="center">Tengah</button><button data-v="right">Kanan</button></div></div>
+        <div class="field"><div class="lbl">Posisi Vertikal</div>
+          <div class="seg" id="segV"><button data-v="top">Atas</button><button data-v="middle">Tengah</button><button data-v="bottom">Bawah</button></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Auto-Clear Saat Hening</h2>
+      <div class="field">
+        <label for="silence">Hapus teks setelah diam <output id="silenceOut"></output></label>
+        <input type="range" id="silence" min="0.5" max="5" step="0.5">
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= KANAN: PREVIEW & OUTPUT ================= -->
+  <div class="col">
+    <section class="card">
+      <h2>Pratinjau Langsung</h2>
+      <div class="preview-wrap" id="previewWrap">
+        <iframe id="preview" src="/overlay?preview=1" title="Pratinjau overlay"></iframe>
+      </div>
+      <div class="hint">Latar kotak-kotak = transparan. Pratinjau memakai halaman overlay yang sama persis dengan yang tampil di OBS.</div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn" id="testBtn">▶ Tes Teks</button>
+        <button class="btn" id="clearBtn">⌫ Hapus Teks</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Output untuk OBS / TikTok Live Studio</h2>
+      <div class="actions">
+        <button class="btn primary" id="copyBtn">📋 Salin URL Overlay</button>
+      </div>
+      <div class="url" id="overlayUrl">http://localhost:3000/overlay</div>
+      <div class="hint">
+        <b>OBS Studio:</b> Sources &rarr; + &rarr; <i>Browser</i> &rarr; tempel URL &rarr; Width <b>1920</b>, Height <b>1080</b> (atau sesuai canvas). Tidak perlu mengisi CSS tambahan.<br>
+        <b>TikTok Live Studio:</b> Tambah sumber <i>Web Page / Link</i> dan tempel URL yang sama.<br>
+        <b>Catatan:</b> panel ini harus tetap terbuka (di Chrome atau Edge) selama siaran karena mesin pengenal suara berjalan di browser ini.
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  /* ============================================================
+   *  PENGATURAN (disimpan di localStorage, dikirim ke overlay)
+   * ============================================================ */
+  const DEFAULTS = {
+    mode: 'w2', animation: 'pop', font: 'Montserrat', size: 96,
+    color: '#ffffff', highlight: '#ffe600', highlightStyle: 'color',
+    outline: 8, outlineColor: '#000000', caps: true,
+    alignH: 'center', alignV: 'bottom', silence: 2,
+  };
+  const STORE_KEY = 'kss.settings.v1';
+  let settings = { ...DEFAULTS };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem(STORE_KEY) || '{}')); } catch (_) {}
+
+  /* ============================================================
+   *  SOCKET.IO
+   * ============================================================ */
+  const socket = io({ transports: ['websocket'], query: { role: 'panel' } });
+
+  socket.on('connect', () => {
+    $('dotSocket').className = 'dot ok';
+    $('txtSocket').textContent = 'Terhubung';
+    socket.emit('settings:update', settings);        // sinkronkan ulang saat (re)connect
+    if (lastSent) socket.emit('subtitle:text', { text: lastSent });
+  });
+  socket.on('disconnect', () => {
+    $('dotSocket').className = 'dot bad';
+    $('txtSocket').textContent = 'Terputus';
+  });
+  socket.on('overlay:count', (n) => {
+    $('dotOverlay').className = 'dot' + (n > 0 ? ' ok' : '');
+    $('txtOverlay').textContent = 'Overlay: ' + n;
+  });
+
+  const pushSettings = () => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (_) {}
+    socket.emit('settings:update', settings);
+  };
+
+  /* ============================================================
+   *  KONTROL UI
+   * ============================================================ */
+  function bindSeg(id, key) {
+    const root = $(id);
+    const sync = () => root.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === settings[key]));
+    root.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-v]');
+      if (!b) return;
+      settings[key] = b.dataset.v; sync(); pushSettings();
+    });
+    sync();
+  }
+  bindSeg('segMode', 'mode');
+  bindSeg('segHl', 'highlightStyle');
+  bindSeg('segH', 'alignH');
+  bindSeg('segV', 'alignV');
+  bindSeg('animGrid', 'animation');
+
+  function bindRange(id, key, fmt) {
+    const el = $(id), out = $(id + 'Out');
+    el.value = settings[key];
+    const show = () => { out.textContent = fmt(Number(el.value)); };
+    el.addEventListener('input', () => { settings[key] = Number(el.value); show(); pushSettings(); });
+    show();
+  }
+  bindRange('size', 'size', (v) => v + ' px');
+  bindRange('outline', 'outline', (v) => v + ' px');
+  bindRange('silence', 'silence', (v) => v.toFixed(1) + ' dtk');
+
+  function bindColor(id, key) {
+    const el = $(id), code = $(id + 'Code');
+    el.value = settings[key]; code.textContent = settings[key].toUpperCase();
+    el.addEventListener('input', () => { settings[key] = el.value; code.textContent = el.value.toUpperCase(); pushSettings(); });
+  }
+  bindColor('color', 'color');
+  bindColor('highlight', 'highlight');
+  bindColor('outlineColor', 'outlineColor');
+
+  $('font').value = settings.font;
+  $('font').addEventListener('change', (e) => { settings.font = e.target.value; pushSettings(); });
+
+  const capsEl = $('capsToggle');
+  capsEl.classList.toggle('on', !!settings.caps);
+  capsEl.addEventListener('click', () => { settings.caps = !settings.caps; capsEl.classList.toggle('on', settings.caps); pushSettings(); });
+
+  /* ---------- Pratinjau (iframe skala 1920x1080) ---------- */
+  const wrap = $('previewWrap'), frame = $('preview');
+  const fitPreview = () => { frame.style.transform = `scale(${wrap.clientWidth / 1920})`; };
+  new ResizeObserver(fitPreview).observe(wrap); fitPreview();
+
+  /* ---------- Salin URL ---------- */
+  const OVERLAY_URL = `${location.protocol}//${location.host}/overlay`;
+  $('overlayUrl').textContent = OVERLAY_URL;
+  $('copyBtn').addEventListener('click', async () => {
+    const btn = $('copyBtn');
+    let ok = false;
+    try { await navigator.clipboard.writeText(OVERLAY_URL); ok = true; }
+    catch (_) {
+      const ta = document.createElement('textarea');
+      ta.value = OVERLAY_URL; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+    }
+    btn.textContent = ok ? '✓ URL tersalin!' : 'Gagal menyalin — salin manual dari kotak di bawah';
+    btn.classList.toggle('ok', ok);
+    setTimeout(() => { btn.textContent = '📋 Salin URL Overlay'; btn.classList.remove('ok'); }, 2000);
+  });
+
+  /* ============================================================
+   *  PENGIRIMAN TEKS + AUTO-CLEAR HENING
+   * ============================================================ */
+  let lastSent = '';
+  let silenceTimer = null;
+
+  function sendText(text) {
+    if (!text || text === lastSent) return;
+    lastSent = text;
+    socket.emit('subtitle:text', { text });
+  }
+  function clearSubtitle() {
+    clearTimeout(silenceTimer); silenceTimer = null;
+    lastSent = '';
+    socket.emit('subtitle:clear');
+  }
+  function armSilenceTimer() {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      clearSubtitle();
+      baseIndex = latestResultCount;        // abaikan hasil lama; mulai kalimat baru
+      showTranscript('');
+    }, settings.silence * 1000);
+  }
+
+  function showTranscript(finalTxt, interimTxt) {
+    const box = $('transcript');
+    if (!finalTxt && !interimTxt) {
+      box.classList.remove('has');
+      box.textContent = 'Teks yang kamu ucapkan akan muncul di sini…';
+      return;
+    }
+    box.classList.add('has');
+    box.textContent = '';
+    box.append(document.createTextNode(finalTxt + (finalTxt && interimTxt ? ' ' : '')));
+    const i = document.createElement('i'); i.textContent = interimTxt || ''; box.appendChild(i);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ============================================================
+   *  SPEECH-TO-TEXT (Web Speech API) + AUTO-RESTART
+   * ============================================================ */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let micActive = false;          // niat pengguna (tombol Mic)
+  let recRunning = false;         // status nyata mesin pengenal
+  let restartTimer = null;
+  let failStreak = 0;
+  let baseIndex = 0;              // indeks hasil pertama yang dihitung (untuk reset setelah hening)
+  let latestResultCount = 0;
+
+  function notice(msg) { const n = $('notice'); n.textContent = msg || ''; n.classList.toggle('show', !!msg); }
+
+  function setMicUI(state) {      // 'off' | 'live' | 'restart'
+    const btn = $('micBtn');
+    btn.classList.toggle('live', state !== 'off');
+    $('micTitle').textContent = state === 'off' ? 'Mikrofon mati' : state === 'live' ? 'Mendengarkan…' : 'Menyambung ulang…';
+    $('micSub').textContent = state === 'off'
+      ? 'Klik tombol untuk mulai mendengarkan (bahasa: Indonesia).'
+      : 'Silakan bicara. Klik lagi untuk menghentikan.';
+    $('dotMic').className = 'dot' + (state === 'live' ? ' bad' : state === 'restart' ? ' ok' : '');
+    $('txtMic').textContent = state === 'off' ? 'Idle' : state === 'live' ? 'LIVE' : 'Restart';
+  }
+
+  function buildRecognition() {
+    const r = new SR();
+    r.lang = 'id-ID';
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+
+    r.onstart = () => { recRunning = true; setMicUI('live'); };
+
+    r.onresult = (ev) => {
+      failStreak = 0;
+      latestResultCount = ev.results.length;
+      if (baseIndex > ev.results.length) baseIndex = 0;
+      let fin = '', interim = '';
+      for (let i = baseIndex; i < ev.results.length; i++) {
+        const t = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal) fin += t + ' '; else interim += t;
+      }
+      fin = fin.trim(); interim = interim.trim();
+      const full = (fin + ' ' + interim).trim();
+      if (!full) return;
+      showTranscript(fin, interim);
+
+      // Simpan 60 kata terakhir saja (cukup untuk mode paragraf, ringan untuk jaringan)
+      const words = full.split(/\s+/);
+      sendText(words.length > 60 ? words.slice(-60).join(' ') : full);
+      armSilenceTimer();
+    };
+
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        micActive = false;
+        notice('Izin mikrofon ditolak. Izinkan akses mikrofon di ikon gembok pada address bar, lalu coba lagi.');
+      } else if (e.error === 'audio-capture') {
+        micActive = false;
+        notice('Mikrofon tidak terdeteksi. Periksa perangkat audio lalu klik Mic lagi.');
+      } else if (e.error === 'network') {
+        notice('Layanan pengenal suara tidak terjangkau (butuh internet). Mencoba lagi…');
+      }
+      // 'no-speech' & 'aborted' normal -> ditangani onend (auto-restart)
+    };
+
+    r.onend = () => {
+      recRunning = false;
+      baseIndex = 0; latestResultCount = 0;      // hasil direset oleh browser pada sesi baru
+      if (!micActive) { setMicUI('off'); return; }
+      // AUTO-RESTART selama tombol Mic masih aktif
+      setMicUI('restart');
+      failStreak++;
+      const delay = Math.min(250 * Math.pow(1.6, Math.max(0, failStreak - 3)), 4000);
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(startRecognition, delay);
+    };
+    return r;
+  }
+
+  function startRecognition() {
+    clearTimeout(restartTimer);
+    if (!micActive || recRunning) return;
+    try {
+      recognition = buildRecognition();
+      recognition.start();
+    } catch (err) {
+      // InvalidStateError dsb. -> coba lagi sebentar
+      restartTimer = setTimeout(startRecognition, 500);
+    }
+  }
+
+  async function startMic() {
+    if (!SR) { notice('Browser ini tidak mendukung Web Speech API. Gunakan Google Chrome atau Microsoft Edge.'); return; }
+    notice('');
+    micActive = true; failStreak = 0; baseIndex = 0;
+    setMicUI('restart');
+    acquireWakeLock();
+    startRecognition();
+  }
+  function stopMic() {
+    micActive = false;
+    clearTimeout(restartTimer);
+    try { recognition && recognition.stop(); } catch (_) {}
+    releaseWakeLock();
+    setMicUI('off');
+    clearSubtitle();
+    showTranscript('');
+  }
+
+  $('micBtn').addEventListener('click', () => (micActive ? stopMic() : startMic()));
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)) {
+      e.preventDefault(); micActive ? stopMic() : startMic();
+    }
+  });
+
+  /* ============================================================
+   *  SCREEN WAKE LOCK
+   * ============================================================ */
+  let wakeLock = null;
+  function wakeUI(on, text) {
+    $('dotWake').className = 'dot' + (on ? ' ok' : '');
+    $('txtWake').textContent = text || ('Wake Lock: ' + (on ? 'on' : 'off'));
+  }
+  async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) { wakeUI(false, 'Wake Lock: tidak didukung'); return; }
+    if (wakeLock || document.visibilityState !== 'visible') return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeUI(true);
+      wakeLock.addEventListener('release', () => { wakeLock = null; wakeUI(false); });
+    } catch (_) { wakeLock = null; wakeUI(false, 'Wake Lock: gagal'); }
+  }
+  async function releaseWakeLock() {
+    try { if (wakeLock) await wakeLock.release(); } catch (_) {}
+    wakeLock = null; wakeUI(false);
+  }
+  // Wake lock otomatis dilepas browser saat tab disembunyikan -> minta lagi saat kembali
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && micActive) {
+      acquireWakeLock();
+      if (!recRunning) startRecognition();
+    }
+  });
+
+  /* ============================================================
+   *  TES & HAPUS
+   * ============================================================ */
+  let testTimers = [];
+  $('testBtn').addEventListener('click', () => {
+    testTimers.forEach(clearTimeout); testTimers = [];
+    const sample = 'Halo semuanya selamat datang di live streaming kami hari ini jangan lupa follow dan share ya'.split(' ');
+    lastSent = '';
+    let acc = [];
+    sample.forEach((w, i) => testTimers.push(setTimeout(() => {
+      acc.push(w); socket.emit('subtitle:text', { text: acc.join(' ') });
+    }, i * 320)));
+    testTimers.push(setTimeout(() => socket.emit('subtitle:clear'), sample.length * 320 + settings.silence * 1000));
+  });
+  $('clearBtn').addEventListener('click', () => { testTimers.forEach(clearTimeout); testTimers = []; clearSubtitle(); });
+
+  if (!SR) notice('Browser ini tidak mendukung Web Speech API. Buka panel di Google Chrome atau Microsoft Edge.');
+  setMicUI('off'); wakeUI(false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinetic Subtitle Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800&family=Poppins:wght@700;800&family=Rubik:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    overflow: hidden;
+  }
+
+  /* Variabel di-set dari JavaScript berdasarkan pengaturan panel */
+  :root {
+    --font: "Montserrat";
+    --fw: 800;
+    --size: 96px;
+    --color: #ffffff;
+    --hl: #ffe600;
+    --hl-text: #0b0b10;
+    --shadow: none;
+    --outline-color: #000000;
+    --box-border: 4px;
+    --tt: uppercase;
+  }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    box-sizing: border-box;
+    padding: 4vh 4vw;
+    justify-content: center;
+    align-items: flex-end;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  #line {
+    flex: 0 0 auto;
+    font-family: var(--font), "Segoe UI", Arial, sans-serif;
+    font-weight: var(--fw);
+    font-size: var(--size);
+    line-height: 1.14;
+    color: var(--color);
+    text-transform: var(--tt);
+    white-space: nowrap;      /* mode "sebaris": tidak pernah patah baris, otomatis diperkecil bila terlalu lebar */
+    width: max-content;
+    transition: opacity .16s ease;
+  }
+  #line.out { opacity: 0; }
+
+  body.mode-para #line {      /* mode paragraf: boleh multi-baris */
+    white-space: normal;
+    width: auto;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- Kata ---------- */
+  .w {
+    display: inline-block;
+    color: var(--color);
+    text-shadow: var(--shadow);
+    transform: rotate(var(--rot, 0deg));
+    transition: color .12s ease, background-color .12s ease;
+  }
+
+  /* Highlight kata aktif: warna teks */
+  body.hl-color .w.active { color: var(--hl); }
+
+  /* Highlight kata aktif: stabilo (latar) */
+  body.hl-marker .w { padding: 0 .14em; border-radius: .18em; }
+  body.hl-marker .w.active { background: var(--hl); color: var(--hl-text); text-shadow: none; }
+
+  /* ---------- Animasi masuk ---------- */
+  .w.enter { will-change: transform, opacity; }
+
+  body.anim-pop    .w.enter { animation: kPop    .42s cubic-bezier(.22, 1, .36, 1) both; transform-origin: 50% 80%; }
+  body.anim-slide  .w.enter { animation: kSlide  .34s cubic-bezier(.16, 1, .3, 1)  both; }
+  body.anim-zoom   .w.enter { animation: kZoom   .24s cubic-bezier(.2, .8, .2, 1)  both; }
+  body.anim-jelly  .w.enter { animation: kJelly  .70s ease-out both; transform-origin: 50% 100%; }
+  body.anim-sticker .w.enter { animation: kSticker .38s cubic-bezier(.34, 1.56, .64, 1) both; }
+
+  @keyframes kPop {
+    0%   { transform: translateY(35%) scale(.3)   rotate(var(--rot, 0deg)); opacity: 0; }
+    45%  { transform: translateY(-10%) scale(1.22) rotate(var(--rot, 0deg)); opacity: 1; }
+    70%  { transform: translateY(4%) scale(.94)   rotate(var(--rot, 0deg)); }
+    100% { transform: translateY(0) scale(1)      rotate(var(--rot, 0deg)); opacity: 1; }
+  }
+  @keyframes kSlide {
+    0%   { transform: translateY(90%)  rotate(var(--rot, 0deg)); opacity: 0; }
+    70%  { transform: translateY(-6%)  rotate(var(--rot, 0deg)); opacity: 1; }
+    100% { transform: translateY(0)    rotate(var(--rot, 0deg)); opacity: 1; }
+  }
+  @keyframes kZoom {
+    0%   { transform: scale(2.8) rotate(var(--rot, 0deg)); opacity: 0; }
+    55%  { transform: scale(.9)  rotate(var(--rot, 0deg)); opacity: 1; }
+    100% { transform: scale(1)   rotate(var(--rot, 0deg)); opacity: 1; }
+  }
+  @keyframes kJelly {
+    0%   { transform: scale(.3, .3)   rotate(var(--rot, 0deg)); opacity: 0; }
+    18%  { transform: scale(1.4, .65) rotate(var(--rot, 0deg)); opacity: 1; }
+    36%  { transform: scale(.82, 1.28) rotate(var(--rot, 0deg)); }
+    54%  { transform: scale(1.12, .92) rotate(var(--rot, 0deg)); }
+    72%  { transform: scale(.97, 1.04) rotate(var(--rot, 0deg)); }
+    100% { transform: scale(1, 1)     rotate(var(--rot, 0deg)); opacity: 1; }
+  }
+  @keyframes kSticker {
+    0%   { transform: scale(.3)  rotate(calc(var(--rot, 0deg) - 14deg)); opacity: 0; }
+    60%  { transform: scale(1.14) rotate(calc(var(--rot, 0deg) + 4deg)); opacity: 1; }
+    100% { transform: scale(1)   rotate(var(--rot, 0deg)); opacity: 1; }
+  }
+
+  /* ---------- Sticker Box Miring (harus paling akhir agar menimpa aturan lain) ---------- */
+  body.anim-sticker .w {
+    background: rgba(12, 12, 18, .92);
+    padding: .04em .24em .08em;
+    margin: .05em .04em;
+    border-radius: .2em;
+    border: var(--box-border) solid var(--outline-color);
+    box-shadow: 0 .07em 0 rgba(0, 0, 0, .4);
+    text-shadow: none;
+  }
+  body.anim-sticker .w:nth-child(odd)  { --rot: -3deg; }
+  body.anim-sticker .w:nth-child(even) { --rot: 2.5deg; }
+  body.anim-sticker .w.active { background: var(--hl); color: var(--hl-text); }
+</style>
+</head>
+<body class="anim-pop hl-color mode-w2">
+  <div id="stage"><div id="line"></div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const FONTS = { Montserrat: 800, Poppins: 800, Anton: 400, Bangers: 400, Rubik: 800 };
+    const ANIMS = ['pop', 'slide', 'zoom', 'jelly', 'sticker'];
+    // max/min = jumlah kata per "halaman", chars = batas karakter sebelum pindah halaman
+    const MODES = {
+      w1:   { max: 1,  min: 1, chars: 999 },
+      w2:   { max: 2,  min: 2, chars: 999 },
+      w34:  { max: 4,  min: 3, chars: 26 },   // 3-4 kata sebaris, otomatis potong
+      para: { max: 80, min: 1, chars: 110 },  // paragraf: ganti halaman tiap ±110 karakter
+    };
+
+    const stage = document.getElementById('stage');
+    const line = document.getElementById('line');
+    const isPreview = new URLSearchParams(location.search).get('preview') === '1';
+
+    let cfg = {
+      mode: 'w2', animation: 'pop', font: 'Montserrat', size: 96,
+      color: '#ffffff', highlight: '#ffe600', highlightStyle: 'color',
+      outline: 8, outlineColor: '#000000', caps: true,
+      alignH: 'center', alignV: 'bottom',
+    };
+
+    let words = [];          // kata target (dari teks terbaru)
+    let shown = 0;           // jumlah kata yang sudah ditampilkan (reveal bertahap)
+    let spans = [];          // elemen <span> pada "halaman" saat ini
+    let curStart = -1;       // indeks kata pertama pada halaman saat ini
+    let revealTimer = null;
+    let clearTimer = null;
+
+    /* ---------------- Util ---------------- */
+
+    function contrast(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      const lum = (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255;
+      return lum > 0.6 ? '#0b0b10' : '#ffffff';
+    }
+
+    // Outline di sisi LUAR huruf (tidak memakan isi huruf) memakai cincin text-shadow.
+    function outlineShadow(w, color) {
+      if (!(w > 0)) return 'none';
+      const steps = Math.max(8, Math.min(32, Math.ceil(w * 3)));
+      const parts = [];
+      for (let i = 0; i < steps; i++) {
+        const a = (Math.PI * 2 * i) / steps;
+        parts.push(`${(Math.cos(a) * w).toFixed(2)}px ${(Math.sin(a) * w).toFixed(2)}px 0 ${color}`);
+      }
+      parts.push(`0 ${Math.round(w * 0.6 + 2)}px ${Math.round(w * 1.2 + 4)}px rgba(0,0,0,.45)`);
+      return parts.join(',');
+    }
+
+    // Awal "halaman" terakhir dari urutan kata (pemotongan greedy, stabil saat kata bertambah).
+    function lastChunkStart(list, m) {
+      let start = 0, count = 0, chars = 0;
+      for (let i = 0; i < list.length; i++) {
+        const add = (count ? 1 : 0) + list[i].length;
+        if (count > 0 && (count >= m.max || (count >= m.min && chars + add > m.chars))) {
+          start = i; count = 0; chars = 0;
+        }
+        chars += (count ? 1 : 0) + list[i].length;
+        count++;
+      }
+      return start;
+    }
+
+    /* ---------------- Pengaturan ---------------- */
+
+    function applySettings(s) {
+      if (!s || typeof s !== 'object') return;
+      Object.assign(cfg, s);
+      if (!FONTS[cfg.font]) cfg.font = 'Montserrat';
+      if (!MODES[cfg.mode]) cfg.mode = 'w2';
+      if (!ANIMS.includes(cfg.animation)) cfg.animation = 'pop';
+      if (cfg.highlightStyle !== 'marker') cfg.highlightStyle = 'color';
+
+      const root = document.documentElement.style;
+      root.setProperty('--font', `"${cfg.font}"`);
+      root.setProperty('--fw', FONTS[cfg.font]);
+      root.setProperty('--size', `${cfg.size}px`);
+      root.setProperty('--color', cfg.color);
+      root.setProperty('--hl', cfg.highlight);
+      root.setProperty('--hl-text', contrast(cfg.highlight));
+      root.setProperty('--outline-color', cfg.outlineColor);
+      root.setProperty('--shadow', outlineShadow(cfg.outline, cfg.outlineColor));
+      root.setProperty('--box-border', `${Math.round(cfg.outline * 0.5)}px`);
+      root.setProperty('--tt', cfg.caps ? 'uppercase' : 'none');
+
+      stage.style.justifyContent = { left: 'flex-start', center: 'center', right: 'flex-end' }[cfg.alignH] || 'center';
+      stage.style.alignItems = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[cfg.alignV] || 'flex-end';
+      line.style.textAlign = cfg.alignH;
+
+      document.body.className = `anim-${cfg.animation} hl-${cfg.highlightStyle} mode-${cfg.mode}`;
+
+      curStart = -1;           // paksa susun ulang (mode / gaya bisa berubah)
+      render(false);
+    }
+
+    /* ---------------- Render ---------------- */
+
+    function addSpan(text, animate) {
+      if (spans.length) line.appendChild(document.createTextNode(' '));
+      const el = document.createElement('span');
+      el.className = 'w';
+      el.textContent = text;
+      if (animate) {
+        el.classList.add('enter');
+        el.addEventListener('animationend', () => el.classList.remove('enter'), { once: true });
+      }
+      line.appendChild(el);
+      spans.push(el);
+    }
+
+    function render(animateLast) {
+      const visible = words.slice(0, shown);
+      if (!visible.length) return;
+
+      const start = lastChunkStart(visible, MODES[cfg.mode]);
+      const slice = visible.slice(start);
+
+      if (start !== curStart || slice.length < spans.length) {
+        // halaman baru -> bangun ulang, hanya kata terakhir yang dianimasikan
+        line.textContent = '';
+        spans = [];
+        slice.forEach((w, i) => addSpan(w, animateLast && i === slice.length - 1));
+        curStart = start;
+      } else {
+        // halaman sama -> perbarui teks (revisi hasil interim) & tambah kata baru
+        slice.forEach((w, i) => {
+          if (spans[i]) {
+            if (spans[i].textContent !== w) spans[i].textContent = w;
+          } else {
+            addSpan(w, animateLast);
+          }
+        });
+      }
+
+      spans.forEach((el, i) => el.classList.toggle('active', i === spans.length - 1));
+      fit();
+    }
+
+    // Perkecil otomatis bila teks lebih besar dari layar (offsetWidth tidak terpengaruh animasi).
+    function fit() {
+      const cs = getComputedStyle(stage);
+      const availW = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const availH = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const w = line.offsetWidth, h = line.offsetHeight;
+      let k = 1;
+      if (w > 0 && h > 0) k = Math.min(1, availW / w, availH / h);
+      const ox = { left: '0%', center: '50%', right: '100%' }[cfg.alignH] || '50%';
+      const oy = { top: '0%', middle: '50%', bottom: '100%' }[cfg.alignV] || '100%';
+      line.style.transformOrigin = `${ox} ${oy}`;
+      line.style.transform = k < 1 ? `scale(${k})` : '';
+    }
+
+    /* ---------------- Alur kata (reveal bertahap) ---------------- */
+
+    function wipeDom() {
+      line.style.transition = 'none';
+      line.classList.remove('out');
+      void line.offsetWidth;
+      line.style.transition = '';
+      line.textContent = '';
+      line.style.transform = '';
+      spans = [];
+      curStart = -1;
+    }
+
+    function step() {
+      revealTimer = null;
+      if (shown < words.length) {
+        shown++;
+        render(true);
+        const backlog = words.length - shown;
+        // Jika beberapa kata datang sekaligus, tampilkan berurutan (makin cepat bila antrean panjang)
+        if (backlog > 0) revealTimer = setTimeout(step, backlog >= 6 ? 25 : backlog >= 3 ? 45 : 75);
+      }
+    }
+
+    function setText(text) {
+      if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; wipeDom(); }
+      words = text ? text.trim().split(/\s+/).filter(Boolean) : [];
+      if (shown > words.length) shown = words.length;
+      if (!words.length) return softClear();
+      if (revealTimer) return;                 // loop reveal akan memakai kata terbaru
+      if (shown < words.length) step();
+      else render(false);                      // hanya revisi teks, tanpa animasi
+    }
+
+    function softClear() {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+      words = [];
+      shown = 0;
+      if (!spans.length) return;
+      line.classList.add('out');
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => { clearTimer = null; wipeDom(); }, 180);
+    }
+
+    /* ---------------- Socket.io ---------------- */
+
+    applySettings(cfg);
+
+    if (document.fonts) {
+      Object.entries(FONTS).forEach(([f, w]) => document.fonts.load(`${w} 64px "${f}"`).catch(() => {}));
+      document.fonts.addEventListener('loadingdone', fit);
+    }
+    window.addEventListener('resize', fit);
+
+    const socket = io({ transports: ['websocket'], query: { role: isPreview ? 'preview' : 'overlay' } });
+    socket.on('settings:update', applySettings);
+    socket.on('subtitle:text', (p) => setText(p && typeof p.text === 'string' ? p.text : ''));
+    socket.on('subtitle:clear', softClear);
+  })();
+  </script>
+</body>
+</html>
