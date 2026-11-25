@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinetic Subtitle Overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@700;900&family=Poppins:wght@700;900&family=Rubik:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: transparent !important;
+            overflow: hidden;
+            display: flex;
+            padding: 48px;
+            /* Default alignment: tengah bawah */
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        #subtitle-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            max-width: 92vw;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+        
+        .word {
+            display: inline-block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 56px;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.2;
+            paint-order: stroke fill;
+            -webkit-text-stroke: 6px #000000;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+            transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.12s ease, color 0.12s ease;
+        }
+        /* Gaya Highlight Stabilo */
+        
+        .word.active {
+            color: #000000 !important;
+            -webkit-text-stroke: 0px transparent !important;
+            text-shadow: none !important;
+            background-color: var(--highlight-color, #a3e635);
+            padding: 2px 14px;
+            border-radius: 10px;
+            transform: scale(1.08);
+        }
+        /* Gaya Sticker Box Miring */
+        
+        .style-sticker .word {
+            background-color: #18181b;
+            padding: 6px 18px;
+            border-radius: 12px;
+            border: 3px solid #ffffff;
+            -webkit-text-stroke: 0px transparent;
+            box-shadow: 4px 6px 0px #000000;
+        }
+        
+        .style-sticker .word:nth-child(odd) {
+            transform: rotate(-2.5deg);
+        }
+        
+        .style-sticker .word:nth-child(even) {
+            transform: rotate(2deg);
+        }
+        
+        .style-sticker .word.active {
+            background-color: var(--highlight-color, #a3e635);
+            border-color: #000000;
+            transform: scale(1.1) rotate(-1deg);
+        }
+        /* 5 Animasi Kinetik CSS */
+        
+        @keyframes popBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.4) translateY(18px);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.14) translateY(-4px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(35px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes zoomPunch {
+            0% {
+                opacity: 0;
+                transform: scale(1.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes elasticJelly {
+            0% {
+                opacity: 0;
+                transform: scale(0.3, 1.5);
+            }
+            45% {
+                opacity: 1;
+                transform: scale(1.25, 0.75);
+            }
+            70% {
+                transform: scale(0.9, 1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1, 1);
+            }
+        }
+        
+        .anim-pop {
+            animation: popBounce 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .anim-slide {
+            animation: slideUp 0.22s ease-out forwards;
+        }
+        
+        .anim-zoom {
+            animation: zoomPunch 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .anim-jelly {
+            animation: elasticJelly 0.38s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="subtitle-container"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const container = document.getElementById('subtitle-container');
+
+        let currentStyles = {
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 56,
+            textColor: '#ffffff',
+            highlightColor: '#a3e635',
+            strokeWidth: 6,
+            caps: true,
+            animation: 'anim-pop',
+            stickerMode: false,
+            alignH: 'center',
+            alignV: 'flex-end'
+        };
+
+        let lastWords = [];
+
+        function applyContainerStyles() {
+            document.body.style.justifyContent = currentStyles.alignH;
+            document.body.style.alignItems = currentStyles.alignV;
+            container.style.justifyContent = currentStyles.alignH;
+
+            const textAlignMap = {
+                'flex-start': 'left',
+                'center': 'center',
+                'flex-end': 'right'
+            };
+            container.style.textAlign = textAlignMap[currentStyles.alignH] || 'center';
+
+            if (currentStyles.stickerMode) {
+                container.classList.add('style-sticker');
+            } else {
+                container.classList.remove('style-sticker');
+            }
+            document.documentElement.style.setProperty('--highlight-color', currentStyles.highlightColor);
+        }
+
+        socket.on('style:apply', (styles) => {
+            currentStyles = {...currentStyles,
+                ...styles
+            };
+            applyContainerStyles();
+            renderWords(lastWords, false);
+        });
+
+        socket.on('subtitle:render', ({
+            words
+        }) => {
+            renderWords(words, true);
+        });
+
+        socket.on('subtitle:clear', () => {
+            lastWords = [];
+            container.innerHTML = '';
+        });
+
+        function renderWords(words, animateNew) {
+            if (!words || words.length === 0) {
+                container.innerHTML = '';
+                lastWords = [];
+                return;
+            }
+
+            container.innerHTML = '';
+            words.forEach((wordText, index) => {
+                const span = document.createElement('span');
+                span.className = 'word';
+
+                const isLastWord = index === words.length - 1;
+                const isNewlyAdded = animateNew && index >= lastWords.length - 1 && isLastWord;
+
+                if (isLastWord) span.classList.add('active');
+                if (isNewlyAdded && currentStyles.animation !== 'none') {
+                    span.classList.add(currentStyles.animation);
+                }
+
+                span.style.fontFamily = currentStyles.fontFamily;
+                span.style.fontSize = `${currentStyles.fontSize}px`;
+                span.style.color = currentStyles.textColor;
+                span.style.webkitTextStroke = currentStyles.stickerMode ?
+                    '0px transparent' :
+                    `${currentStyles.strokeWidth}px #000000`;
+
+                span.textContent = currentStyles.caps ? wordText.toUpperCase() : wordText;
+                container.appendChild(span);
+            });
+
+            lastWords = [...words];
+        }
+
+        applyContainerStyles();
+    </script>
+</body>
+
+</html>

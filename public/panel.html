@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinetic Subtitle Studio — Control Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Inter:wght@400;600;700&family=Montserrat:wght@700;900&family=Poppins:wght@700;900&family=Rubik:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+         :root {
+            --bg: #0f1115;
+            --card: #181b22;
+            --border: #2a2f3d;
+            --text: #f3f4f6;
+            --muted: #9ca3af;
+            --accent: #a3e635;
+            --danger: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .layout {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+        }
+        
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+        
+        .controls-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .preview-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.2s ease;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-start {
+            background: var(--accent);
+            color: #090d02;
+        }
+        
+        .btn-stop {
+            background: var(--danger);
+            color: #ffffff;
+        }
+        
+        .btn-secondary {
+            background: #232834;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #232834;
+            margin-top: 10px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+        
+        .dot.live {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        
+        .field {
+            margin-bottom: 14px;
+        }
+        
+        .field:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #d1d5db;
+            margin-bottom: 6px;
+        }
+        
+        select,
+        input[type="range"] {
+            width: 100%;
+            background: #111318;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font-size: 13px;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+            accent-color: var(--accent);
+        }
+        
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .color-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #111318;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+        
+        input[type="color"] {
+            border: none;
+            width: 28px;
+            height: 28px;
+            background: none;
+            cursor: pointer;
+        }
+        
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        /* Live Preview Box (Checkerboard Transparan) */
+        
+        .preview-frame-wrap {
+            position: relative;
+            width: 100%;
+            height: 440px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background-color: #16181d;
+            background-image: linear-gradient(45deg, #1f232b 25%, transparent 25%), linear-gradient(-45deg, #1f232b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f232b 75%), linear-gradient(-45deg, transparent 75%, #1f232b 75%);
+            background-size: 24px 24px;
+            background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+        
+        .transcript-box {
+            background: #111318;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 76px;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Kolom Kiri: Pengaturan -->
+        <div class="controls-col">
+            <div class="card">
+                <h1>🎙️ Auto Subtitle Studio</h1>
+                <div class="status-badge">
+                    <span id="status-dot" class="dot"></span>
+                    <span id="status-text">Mikrofon Mati</span>
+                </div>
+                <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                    <button id="btn-mic" class="btn btn-start">▶ Mulai Tangkap Suara</button>
+                    <button id="btn-copy" class="btn btn-secondary">📋 Salin URL Overlay OBS</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Alur Kata & Animasi</h2>
+                <div class="field">
+                    <label>Mode Tampilan Kata</label>
+                    <select id="word-mode">
+            <option value="1">1 Kata (Fokus Cepat)</option>
+            <option value="2">2 Kata Sebaris</option>
+            <option value="4" selected>3–4 Kata Sebaris (Auto Potong)</option>
+            <option value="7">5–7 Kata Sebaris (Panjang)</option>
+            <option value="0">Mode Paragraf</option>
+          </select>
+                </div>
+
+                <div class="field">
+                    <label>Efek Animasi Kinetik</label>
+                    <select id="anim-style">
+            <option value="anim-pop" selected>Pop & Bounce</option>
+            <option value="anim-slide">Slide Up</option>
+            <option value="anim-zoom">Zoom Punch</option>
+            <option value="anim-jelly">Elastic Jelly</option>
+            <option value="sticker">Sticker Box Miring</option>
+            <option value="none">Tanpa Animasi</option>
+          </select>
+                </div>
+
+                <div class="field">
+                    <label>Auto-Clear Saat Diam <span id="val-clear">2.0 dtk</span></label>
+                    <input type="range" id="clear-delay" min="0.5" max="5" step="0.5" value="2">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Tipografi & Warna</h2>
+                <div class="field">
+                    <label>Jenis Font</label>
+                    <select id="font-family">
+            <option value="'Montserrat', sans-serif" selected>Montserrat (Bold Modern)</option>
+            <option value="'Poppins', sans-serif">Poppins (Clean)</option>
+            <option value="'Anton', sans-serif">Anton (MrBeast Style)</option>
+            <option value="'Bangers', cursive">Bangers (Komik)</option>
+            <option value="'Rubik', sans-serif">Rubik (Geometric)</option>
+          </select>
+                </div>
+
+                <div class="field">
+                    <label>Ukuran Teks <span id="val-size">56 px</span></label>
+                    <input type="range" id="font-size" min="28" max="96" step="2" value="56">
+                </div>
+
+                <div class="field">
+                    <label>Ketebalan Outline <span id="val-stroke">6 px</span></label>
+                    <input type="range" id="stroke-width" min="0" max="14" step="1" value="6">
+                </div>
+
+                <div class="row-2 field">
+                    <div>
+                        <label>Warna Teks</label>
+                        <div class="color-box">
+                            <input type="color" id="text-color" value="#ffffff">
+                            <span style="font-size:12px;">Utama</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Highlight Aktif</label>
+                        <div class="color-box">
+                            <input type="color" id="highlight-color" value="#a3e635">
+                            <span style="font-size:12px;">Stabilo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row-2 field">
+                    <div>
+                        <label>Posisi Horizontal</label>
+                        <select id="align-h">
+              <option value="flex-start">Kiri</option>
+              <option value="center" selected>Tengah</option>
+              <option value="flex-end">Kanan</option>
+            </select>
+                    </div>
+                    <div>
+                        <label>Posisi Vertikal</label>
+                        <select id="align-v">
+              <option value="flex-start">Atas</option>
+              <option value="center">Tengah</option>
+              <option value="flex-end" selected>Bawah</option>
+            </select>
+                    </div>
+                </div>
+
+                <div class="toggle-row">
+                    <span>Huruf Kapital Semua (CAPS)</span>
+                    <input type="checkbox" id="caps-toggle" checked>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Preview & Log -->
+        <div class="preview-col">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h2 style="margin:0;">Live Preview Overlay (Transparan)</h2>
+                    <button id="btn-test" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">⚡ Tes Teks</button>
+                </div>
+                <div class="preview-frame-wrap">
+                    <iframe src="/overlay" title="Overlay Preview"></iframe>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Log Tangkapan Suara (id-ID)</h2>
+                <div id="transcript-log" class="transcript-box">
+                    Klik "Mulai Tangkap Suara" lalu mulai berbicara, atau klik "Tes Teks" untuk menguji animasi...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let isListening = false;
+        let recognition = null;
+        let clearTimer = null;
+        let wakeLock = null;
+
+        // Elemen UI
+        const btnMic = document.getElementById('btn-mic');
+        const btnCopy = document.getElementById('btn-copy');
+        const btnTest = document.getElementById('btn-test');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const transcriptLog = document.getElementById('transcript-log');
+
+        function getCurrentStyles() {
+            const animVal = document.getElementById('anim-style').value;
+            return {
+                fontFamily: document.getElementById('font-family').value,
+                fontSize: Number(document.getElementById('font-size').value),
+                strokeWidth: Number(document.getElementById('stroke-width').value),
+                textColor: document.getElementById('text-color').value,
+                highlightColor: document.getElementById('highlight-color').value,
+                alignH: document.getElementById('align-h').value,
+                alignV: document.getElementById('align-v').value,
+                caps: document.getElementById('caps-toggle').checked,
+                stickerMode: animVal === 'sticker',
+                animation: animVal === 'sticker' ? 'anim-pop' : animVal
+            };
+        }
+
+        function broadcastStyles() {
+            document.getElementById('val-size').textContent = document.getElementById('font-size').value + ' px';
+            document.getElementById('val-stroke').textContent = document.getElementById('stroke-width').value + ' px';
+            document.getElementById('val-clear').textContent = Number(document.getElementById('clear-delay').value).toFixed(1) + ' dtk';
+            socket.emit('style:update', getCurrentStyles());
+        }
+
+        // Daftarkan listener untuk semua kontrol tampilan
+        ['word-mode', 'anim-style', 'clear-delay', 'font-family', 'font-size', 'stroke-width', 'text-color', 'highlight-color', 'align-h', 'align-v', 'caps-toggle']
+        .forEach(id => document.getElementById(id).addEventListener('input', broadcastStyles));
+
+        function resetClearTimer() {
+            clearTimeout(clearTimer);
+            const delayMs = Number(document.getElementById('clear-delay').value) * 1000;
+            clearTimer = setTimeout(() => {
+                socket.emit('subtitle:clear');
+            }, delayMs);
+        }
+
+        function processAndSendText(rawText) {
+            const cleaned = rawText.trim();
+            if (!cleaned) return;
+
+            transcriptLog.textContent = cleaned;
+            const allWords = cleaned.split(/\s+/);
+            const maxWords = Number(document.getElementById('word-mode').value);
+
+            let displayWords = allWords;
+            if (maxWords > 0) {
+                const remainder = allWords.length % maxWords;
+                const sliceCount = remainder === 0 ? maxWords : remainder;
+                displayWords = allWords.slice(-sliceCount);
+            }
+
+            socket.emit('subtitle:update', {
+                words: displayWords
+            });
+            resetClearTimer();
+        }
+
+        // Screen Wake Lock agar layar tidak sleep
+        async function toggleWakeLock(enable) {
+            try {
+                if (enable && 'wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } else if (!enable && wakeLock) {
+                    await wakeLock.release();
+                    wakeLock = null;
+                }
+            } catch (e) { /* Abaikan jika browser membatasi */ }
+        }
+
+        // Inisialisasi Web Speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                const latestResult = event.results[event.results.length - 1];
+                const currentTranscript = latestResult[0].transcript;
+                processAndSendText(currentTranscript);
+            };
+
+            // Wajib auto-restart jika mic masih aktif
+            recognition.onend = () => {
+                if (isListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {}
+                }
+            };
+
+            recognition.onerror = (event) => {
+                if (event.error === 'not-allowed') {
+                    alert('Izin mikrofon ditolak browser. Aktifkan izin mic di ikon gembok sebelah URL Chrome.');
+                    stopListening();
+                }
+            };
+        } else {
+            alert('Browser tidak mendukung Web Speech API. Gunakan Google Chrome Desktop.');
+        }
+
+        function startListening() {
+            if (!recognition) return;
+            isListening = true;
+            recognition.start();
+            toggleWakeLock(true);
+            btnMic.textContent = '⏹ Hentikan Mikrofon';
+            btnMic.className = 'btn btn-stop';
+            statusDot.classList.add('live');
+            statusText.textContent = 'Mendengarkan (id-ID)...';
+            broadcastStyles();
+        }
+
+        function stopListening() {
+            isListening = false;
+            if (recognition) recognition.stop();
+            toggleWakeLock(false);
+            btnMic.textContent = '▶ Mulai Tangkap Suara';
+            btnMic.className = 'btn btn-start';
+            statusDot.classList.remove('live');
+            statusText.textContent = 'Mikrofon Mati';
+        }
+
+        btnMic.addEventListener('click', () => {
+            isListening ? stopListening() : startListening();
+        });
+
+        btnCopy.addEventListener('click', async() => {
+            await navigator.clipboard.writeText('http://localhost:3000/overlay');
+            const oldText = btnCopy.textContent;
+            btnCopy.textContent = '✅ URL Tersalin!';
+            setTimeout(() => btnCopy.textContent = oldText, 2000);
+        });
+
+        // Tombol tes animasi tanpa harus bicara
+        btnTest.addEventListener('click', () => {
+            broadcastStyles();
+            const sample = ['HALO', 'SEMUANYA', 'SELAMAT', 'DATANG', 'DI', 'LIVE', 'STREAM!'];
+            let idx = 0;
+            const interval = setInterval(() => {
+                idx++;
+                processAndSendText(sample.slice(0, idx).join(' '));
+                if (idx >= sample.length) clearInterval(interval);
+            }, 280);
+        });
+
+        socket.on('connect', broadcastStyles);
+    </script>
+</body>
+
+</html>
